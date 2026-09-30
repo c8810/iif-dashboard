@@ -1,0 +1,237 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iranian Influence Factor (IIF) & Energy Telemetry Dashboard</title>
+    <style>
+        :root {
+            --bg-color: #0d1117;
+            --panel-bg: #161b22;
+            --text-color: #c9d1d9;
+            --border-color: #30363d;
+            --accent-green: #2ea043;
+            --accent-red: #f85149;
+            --accent-blue: #58a6ff;
+            --accent-yellow: #e3b341;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        h1 { color: var(--text-color); font-size: 1.5rem; margin-bottom: 20px; }
+        .dashboard {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            width: 100%;
+            max-width: 1200px;
+        }
+        .kpi-container {
+            display: flex;
+            gap: 15px;
+            justify-content: space-between;
+        }
+        .kpi-card {
+            background-color: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 15px;
+            flex: 1;
+            text-align: center;
+        }
+        .kpi-title { font-size: 0.85rem; color: #8b949e; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .kpi-value { font-size: 1.8rem; font-weight: bold; color: var(--accent-blue); }
+        .kpi-value.red { color: var(--accent-red); }
+        .kpi-value.green { color: var(--accent-green); }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: var(--panel-bg);
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: right;
+            border-bottom: 1px solid var(--border-color);
+            font-variant-numeric: tabular-nums;
+        }
+        th {
+            background-color: #21262d;
+            color: #8b949e;
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+        }
+        th:first-child, td:first-child { text-align: left; }
+        th:last-child, td:last-child { text-align: left; }
+        tr:last-child td { border-bottom: none; }
+        tr:hover { background-color: #1f242b; }
+        .event-badge {
+            background-color: rgba(88, 166, 255, 0.15);
+            color: var(--accent-blue);
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+        }
+        .event-badge.high-threat {
+            background-color: rgba(248, 81, 73, 0.15);
+            color: var(--accent-red);
+        }
+        .note {
+            margin-top: 10px;
+            font-size: 0.85rem;
+            color: #8b949e;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+
+    <h1>Energy Threat Telemetry: IIF Dashboard</h1>
+    
+    <div class="dashboard">
+        <div class="kpi-container" id="kpi-container">
+            <!-- KPIs rendered via JS -->
+        </div>
+
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Brent ($/bbl)</th>
+                    <th>WTI ($/bbl)</th>
+                    <th>Nat Gas ($/MMBtu)</th>
+                    <th>Global Liq. (mb/d)</th>
+                    <th>Shadow Other (wt)</th>
+                    <th>Choke Score</th>
+                    <th>Energy Score</th>
+                    <th>IIF</th>
+                    <th>Event Context</th>
+                </tr>
+            </thead>
+            <tbody id="table-body">
+                <!-- Data rendered via JS -->
+            </tbody>
+        </table>
+        
+        <div class="note">
+            * IIF = (Choke × 0.7) + (Energy × 0.3) | Choke = (21% Petro + 25% LNG) Baseline Disruption Modifiers
+        </div>
+    </div>
+
+
+    <script>
+        let dataset = [];
+        async function loadData() {
+            const res = await fetch('data/iif.json');
+            dataset = await res.json();
+        }
+
+
+        // IIF Configuration for de-shielded Americas scenario
+        const CONFIG = {
+            baseLiquidsVol: 102.5, 
+            hormuzPetroWeight: 0.21,
+            hormuzLNGWeight: 0.25
+        };
+
+
+        function calculateMetrics(row) {
+            const brentBase = 82.0;
+            const priceFactor = ((row.brentPrice - brentBase) / brentBase) * 100; 
+            const supplyDeficit = CONFIG.baseLiquidsVol - row.globalLiquids;
+            
+            const energyScore = (priceFactor * 0.6) + (supplyDeficit * 2.5) + (row.shadowOther * 0.5);
+            const disruptionSeverity = supplyDeficit / (CONFIG.baseLiquidsVol * CONFIG.hormuzPetroWeight);
+            const chokeScore = (disruptionSeverity * 100) + (row.shadowOther * 1.5);
+
+
+            // Updated IIF Formula: (Choke × 0.7) + (Energy × 0.3)
+            const iif = (chokeScore * 0.7) + (energyScore * 0.3);
+
+
+            return {
+                chokeScore: Math.max(0, chokeScore),
+                energyScore: Math.max(0, energyScore),
+                iif: Math.max(0, iif)
+            };
+        }
+
+
+        function renderTable() {
+            const tbody = document.getElementById('table-body');
+            tbody.innerHTML = '';
+            
+            dataset.forEach(row => {
+                const metrics = calculateMetrics(row);
+                const tr = document.createElement('tr');
+                
+                const isHighThreat = metrics.iif > 40;
+                const badgeClass = isHighThreat ? 'event-badge high-threat' : 'event-badge';
+
+
+                tr.innerHTML = `
+                    <td>${row.date}</td>
+                    <td>$${row.brentPrice.toFixed(2)}</td>
+                    <td>$${row.wtiPrice.toFixed(2)}</td>
+                    <td>$${row.natGasPrice.toFixed(2)}</td>
+                    <td>${row.globalLiquids.toFixed(1)}</td>
+                    <td>${row.shadowOther.toFixed(1)}</td>
+                    <td>${metrics.chokeScore.toFixed(1)}</td>
+                    <td>${metrics.energyScore.toFixed(1)}</td>
+                    <td style="font-weight:bold; color: ${isHighThreat ? 'var(--accent-red)' : 'var(--accent-yellow)'}">${metrics.iif.toFixed(1)}</td>
+                    <td><span class="${badgeClass}">${row.events}</span></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+
+        function renderKPIs() {
+            const latest = dataset[dataset.length - 1];
+            const previous = dataset[dataset.length - 2];
+            
+            const latestMetrics = calculateMetrics(latest);
+            const prevMetrics = calculateMetrics(previous);
+            
+            const iifTrend = latestMetrics.iif >= prevMetrics.iif ? 'red' : 'green';
+            const brentTrend = latest.brentPrice >= previous.brentPrice ? 'red' : 'green';
+
+
+            const container = document.getElementById('kpi-container');
+            container.innerHTML = `
+                <div class="kpi-card">
+                    <div class="kpi-title">Current IIF</div>
+                    <div class="kpi-value ${iifTrend}">${latestMetrics.iif.toFixed(1)}</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-title">Brent Crude</div>
+                    <div class="kpi-value ${brentTrend}">$${latest.brentPrice.toFixed(2)}</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-title">Global Liquids (mb/d)</div>
+                    <div class="kpi-value ${latest.globalLiquids < previous.globalLiquids ? 'red' : 'green'}">${latest.globalLiquids.toFixed(1)}</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-title">Active Choke Factor</div>
+                    <div class="kpi-value ${latestMetrics.chokeScore > 30 ? 'red' : 'yellow'}">${latestMetrics.chokeScore.toFixed(1)}</div>
+                </div>
+            `;
+        }
+
+
+        loadData().then(() => { renderTable(); renderKPIs(); });
+    </script>
+</body>
+</html>

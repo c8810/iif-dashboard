@@ -1,0 +1,236 @@
+[
+  {
+    "date": "2026-09-01",
+    "globalLiquids": 102.1,
+    "wtiPrice": 78.5,
+    "brentPrice": 82.1,
+    "natGasPrice": 2.15,
+    "shadowOther": 1.2,
+    "events": "Normal"
+  },
+  {
+    "date": "2026-09-02",
+    "globalLiquids": 102.2,
+    "wtiPrice": 78.9,
+    "brentPrice": 82.5,
+    "natGasPrice": 2.18,
+    "shadowOther": 1.3,
+    "events": "Normal"
+  },
+  {
+    "date": "2026-09-03",
+    "globalLiquids": 102.1,
+    "wtiPrice": 79.1,
+    "brentPrice": 82.8,
+    "natGasPrice": 2.2,
+    "shadowOther": 1.4,
+    "events": "Escalation rumors"
+  },
+  {
+    "date": "2026-09-04",
+    "globalLiquids": 102.0,
+    "wtiPrice": 80.5,
+    "brentPrice": 84.1,
+    "natGasPrice": 2.3,
+    "shadowOther": 1.8,
+    "events": "Initial skirmish"
+  },
+  {
+    "date": "2026-09-05",
+    "globalLiquids": 101.5,
+    "wtiPrice": 83.2,
+    "brentPrice": 87.5,
+    "natGasPrice": 2.45,
+    "shadowOther": 2.5,
+    "events": "Chokepoint threat"
+  },
+  {
+    "date": "2026-09-06",
+    "globalLiquids": 101.0,
+    "wtiPrice": 85.1,
+    "brentPrice": 89.2,
+    "natGasPrice": 2.6,
+    "shadowOther": 3.0,
+    "events": "Transit disrupted"
+  },
+  {
+    "date": "2026-09-07",
+    "globalLiquids": 100.5,
+    "wtiPrice": 88.4,
+    "brentPrice": 92.5,
+    "natGasPrice": 2.8,
+    "shadowOther": 3.5,
+    "events": "Insurance premiums spike"
+  },
+  {
+    "date": "2026-09-08",
+    "globalLiquids": 99.8,
+    "wtiPrice": 91.0,
+    "brentPrice": 95.1,
+    "natGasPrice": 2.95,
+    "shadowOther": 4.1,
+    "events": "Regional rerouting"
+  },
+  {
+    "date": "2026-09-09",
+    "globalLiquids": 99.2,
+    "wtiPrice": 94.5,
+    "brentPrice": 98.8,
+    "natGasPrice": 3.1,
+    "shadowOther": 4.8,
+    "events": "Fleet diversions"
+  },
+  {
+    "date": "2026-09-10",
+    "globalLiquids": 98.5,
+    "wtiPrice": 98.2,
+    "brentPrice": 103.5,
+    "natGasPrice": 3.35,
+    "shadowOther": 5.5,
+    "events": "Supply crunch realized"
+  },
+  {
+    "date": "2026-09-11",
+    "globalLiquids": 98.0,
+    "wtiPrice": 102.1,
+    "brentPrice": 108.0,
+    "natGasPrice": 3.6,
+    "shadowOther": 6.2,
+    "events": "Strategic reserves tapped"
+  },
+  {
+    "date": "2026-09-12",
+    "globalLiquids": 97.5,
+    "wtiPrice": 104.5,
+    "brentPrice": 110.2,
+    "natGasPrice": 3.8,
+    "shadowOther": 6.8,
+    "events": "Stalemate established"
+  },
+  {
+    "date": "2026-09-13",
+    "globalLiquids": 97.4,
+    "wtiPrice": 103.1,
+    "brentPrice": 108.5,
+    "natGasPrice": 3.85,
+    "shadowOther": 7.0,
+    "events": "Market volatility"
+  },
+  {
+    "date": "2026-09-14",
+    "globalLiquids": 97.5,
+    "wtiPrice": 102.0,
+    "brentPrice": 107.2,
+    "natGasPrice": 3.9,
+    "shadowOther": 7.2,
+    "events": "US escorts ramp up"
+  },
+  {
+    "date": "2026-09-15",
+    "globalLiquids": 97.6,
+    "wtiPrice": 100.5,
+    "brentPrice": 105.8,
+    "natGasPrice": 3.85,
+    "shadowOther": 7.3,
+    "events": "80 confirmed vessel incidents"
+  },
+  {
+    "date": "2026-09-16",
+    "globalLiquids": 97.2,
+    "wtiPrice": 99.2,
+    "brentPrice": 104.5,
+    "natGasPrice": 3.95,
+    "shadowOther": 7.5,
+    "events": "Togo & Panama tankers struck"
+  },
+  {
+    "date": "2026-09-17",
+    "globalLiquids": 97.1,
+    "wtiPrice": 98.8,
+    "brentPrice": 104.0,
+    "natGasPrice": 4.0,
+    "shadowOther": 7.6,
+    "events": "Strait transit disruptions"
+  },
+  {
+    "date": "2026-09-18",
+    "globalLiquids": 96.8,
+    "wtiPrice": 99.5,
+    "brentPrice": 105.0,
+    "natGasPrice": 4.1,
+    "shadowOther": 7.9,
+    "events": "Marshall Islands tanker struck"
+  },
+  {
+    "date": "2026-09-19",
+    "globalLiquids": 97.5,
+    "wtiPrice": 97.8,
+    "brentPrice": 103.0,
+    "natGasPrice": 3.9,
+    "shadowOther": 8.0,
+    "events": "1B barrels escorted via blockade"
+  },
+  {
+    "date": "2026-09-20",
+    "globalLiquids": 97.4,
+    "wtiPrice": 97.5,
+    "brentPrice": 103.5,
+    "natGasPrice": 3.9,
+    "shadowOther": 8.0,
+    "events": "Blockade continues"
+  },
+  {
+    "date": "2026-09-21",
+    "globalLiquids": 97.0,
+    "wtiPrice": 98.2,
+    "brentPrice": 104.5,
+    "natGasPrice": 3.95,
+    "shadowOther": 8.2,
+    "events": "Market awaits UN assembly"
+  },
+  {
+    "date": "2026-09-22",
+    "globalLiquids": 96.5,
+    "wtiPrice": 99.1,
+    "brentPrice": 105.2,
+    "natGasPrice": 4.0,
+    "shadowOther": 8.5,
+    "events": "Iraq-Syria bypass pipeline planned"
+  },
+  {
+    "date": "2026-09-23",
+    "globalLiquids": 96.2,
+    "wtiPrice": 100.5,
+    "brentPrice": 106.5,
+    "natGasPrice": 4.1,
+    "shadowOther": 8.6,
+    "events": "Regional volatility"
+  },
+  {
+    "date": "2026-09-24",
+    "globalLiquids": 96.0,
+    "wtiPrice": 101.2,
+    "brentPrice": 107.0,
+    "natGasPrice": 4.05,
+    "shadowOther": 8.7,
+    "events": "Iran proposes 7-day reopening"
+  },
+  {
+    "date": "2026-09-25",
+    "globalLiquids": 96.5,
+    "wtiPrice": 93.4,
+    "brentPrice": 105.9,
+    "natGasPrice": 3.9,
+    "shadowOther": 8.5,
+    "events": "UN Gen Assembly / Qatar mediates"
+  },
+  {
+    "date": "2026-09-26",
+    "globalLiquids": 96.8,
+    "wtiPrice": 92.41,
+    "brentPrice": 104.32,
+    "natGasPrice": 3.85,
+    "shadowOther": 8.4,
+    "events": "Prices drop on deal speculation"
+  }
+]
