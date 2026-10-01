@@ -34,8 +34,8 @@ no markdown fences, no commentary, with exactly these keys:
 
 ## Dashboard math (for context, not for you to compute)
 
-- Choke score derives from the supply deficit vs the 102.5 baseline with Hormuz
-  weights (21% petroleum, 25% LNG). Energy score blends the Brent price move vs an
+- Choke score derives from the supply deficit vs the 102.5 baseline with the Hormuz
+  petroleum weight (21%). Energy score blends the Brent price move vs an
   $82 baseline with the deficit and shadowOther. IIF = (Choke × 0.7) + (Energy × 0.3).
   You only supply the raw row; the page computes the rest.
 

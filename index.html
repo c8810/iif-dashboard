@@ -111,12 +111,15 @@
                     <th>Date</th>
                     <th>Brent ($/bbl)</th>
                     <th>WTI ($/bbl)</th>
+                    <th>Spread ($)</th>
                     <th>Nat Gas ($/MMBtu)</th>
                     <th>Global Liq. (mb/d)</th>
                     <th>Shadow Other (wt)</th>
                     <th>Choke Score</th>
                     <th>Energy Score</th>
                     <th>IIF</th>
+                    <th>&Delta; IIF</th>
+                    <th>Threat</th>
                     <th>Event Context</th>
                 </tr>
             </thead>
@@ -126,7 +129,7 @@
         </table>
         
         <div class="note">
-            * IIF = (Choke × 0.7) + (Energy × 0.3) | Choke = (21% Petro + 25% LNG) Baseline Disruption Modifiers
+            * IIF = (Choke × 0.7) + (Energy × 0.3) | Choke uses the 21% Hormuz petroleum baseline disruption weight
         </div>
     </div>
 
@@ -142,9 +145,17 @@
         // IIF Configuration for de-shielded Americas scenario
         const CONFIG = {
             baseLiquidsVol: 102.5, 
-            hormuzPetroWeight: 0.21,
-            hormuzLNGWeight: 0.25
+            hormuzPetroWeight: 0.21
         };
+
+
+        // Threat bands off the IIF (Prototype's read, 2026-10-01)
+        function threatBand(iif) {
+            if (iif >= 60) return { label: 'SEVERE', color: 'var(--accent-red)' };
+            if (iif >= 40) return { label: 'HIGH', color: 'var(--accent-red)' };
+            if (iif >= 20) return { label: 'ELEVATED', color: 'var(--accent-yellow)' };
+            return { label: 'LOW', color: 'var(--accent-green)' };
+        }
 
 
         function calculateMetrics(row) {
@@ -164,7 +175,8 @@
             return {
                 chokeScore: Math.max(0, chokeScore),
                 energyScore: Math.max(0, energyScore),
-                iif: Math.max(0, iif)
+                iif: Math.max(0, iif),
+                spread: row.brentPrice - row.wtiPrice
             };
         }
 
@@ -173,24 +185,33 @@
             const tbody = document.getElementById('table-body');
             tbody.innerHTML = '';
             
-            dataset.forEach(row => {
+            dataset.forEach((row, i) => {
                 const metrics = calculateMetrics(row);
                 const tr = document.createElement('tr');
                 
                 const isHighThreat = metrics.iif > 40;
                 const badgeClass = isHighThreat ? 'event-badge high-threat' : 'event-badge';
+                const band = threatBand(metrics.iif);
+
+                const prevMetrics = i > 0 ? calculateMetrics(dataset[i - 1]) : null;
+                const delta = prevMetrics ? metrics.iif - prevMetrics.iif : null;
+                const deltaColor = delta === null ? 'inherit' : (delta > 0 ? 'var(--accent-red)' : (delta < 0 ? 'var(--accent-green)' : 'inherit'));
+                const deltaText = delta === null ? '&mdash;' : ((delta > 0 ? '+' : '') + delta.toFixed(1));
 
 
                 tr.innerHTML = `
                     <td>${row.date}</td>
                     <td>$${row.brentPrice.toFixed(2)}</td>
                     <td>$${row.wtiPrice.toFixed(2)}</td>
+                    <td>$${metrics.spread.toFixed(2)}</td>
                     <td>$${row.natGasPrice.toFixed(2)}</td>
                     <td>${row.globalLiquids.toFixed(1)}</td>
                     <td>${row.shadowOther.toFixed(1)}</td>
                     <td>${metrics.chokeScore.toFixed(1)}</td>
                     <td>${metrics.energyScore.toFixed(1)}</td>
                     <td style="font-weight:bold; color: ${isHighThreat ? 'var(--accent-red)' : 'var(--accent-yellow)'}">${metrics.iif.toFixed(1)}</td>
+                    <td style="font-weight:bold; color: ${deltaColor}">${deltaText}</td>
+                    <td><span class="event-badge" style="color:${band.color}; font-weight:bold;">${band.label}</span></td>
                     <td><span class="${badgeClass}">${row.events}</span></td>
                 `;
                 tbody.appendChild(tr);
