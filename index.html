@@ -111,15 +111,15 @@
                     <th>Date</th>
                     <th>Brent ($/bbl)</th>
                     <th>WTI ($/bbl)</th>
-                    <th>Spread ($)</th>
+                    <th>Spread (Agent 1)</th>
                     <th>Nat Gas ($/MMBtu)</th>
                     <th>Global Liq. (mb/d)</th>
                     <th>Shadow Other (wt)</th>
                     <th>Choke Score</th>
                     <th>Energy Score</th>
                     <th>IIF</th>
-                    <th>&Delta; IIF</th>
-                    <th>Threat</th>
+                    <th>&Delta; IIF (Agent 1)</th>
+                    <th>Threat (Agent 1)</th>
                     <th>Event Context</th>
                 </tr>
             </thead>
@@ -129,7 +129,7 @@
         </table>
         
         <div class="note">
-            * IIF = (Choke × 0.7) + (Energy × 0.3) | Choke uses the 21% Hormuz petroleum baseline disruption weight
+            * IIF = (Choke × 0.7) + (Energy × 0.3) | Choke = (21% Petro + 25% LNG) Baseline Disruption Modifiers
         </div>
     </div>
 
@@ -145,11 +145,12 @@
         // IIF Configuration for de-shielded Americas scenario
         const CONFIG = {
             baseLiquidsVol: 102.5, 
-            hormuzPetroWeight: 0.21
+            hormuzPetroWeight: 0.21,
+            hormuzLNGWeight: 0.25
         };
 
 
-        // Threat bands off the IIF (Prototype's read, 2026-10-01)
+        // Threat bands off the IIF — Agent 1 interpretation, 2026-10-01
         function threatBand(iif) {
             if (iif >= 60) return { label: 'SEVERE', color: 'var(--accent-red)' };
             if (iif >= 40) return { label: 'HIGH', color: 'var(--accent-red)' };
