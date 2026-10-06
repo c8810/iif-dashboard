@@ -5,9 +5,14 @@
    from Yahoo Finance (no API key needed).
 2. Asks Gemini (GEMINI_API_KEY env var) for the judgment fields Chase used to
    curate by hand: globalLiquids estimate, shadowOther weight, and the event note.
-3. Validates the AI's output, appends the row to data/iif.json, and exits 0.
+3. Validates the AI's output, appends the row(s) to data/iif.json, and exits 0.
    Any failure exits non-zero so the GitHub Action fails LOUDLY instead of
    writing a bad row.
+
+Backfill: if the data's last row is older than yesterday, every missing calendar
+day (including weekends, carrying forward the last available close — the same
+convention as the original hand-built sheet) gets its own Gemini row, oldest
+first, so trajectory context stays consistent.
 
 Run from the repo root:  python3 scripts/daily_update.py
 """
@@ -16,7 +21,7 @@ import os
 import sys
 import urllib.request
 import urllib.error
-from datetime import datetime
+from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
 DATA_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "iif.json")
@@ -32,8 +37,13 @@ def fail(msg):
     sys.exit(1)
 
 
-def yahoo_last_close(symbol):
-    url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?interval=1d&range=10d"
+def yahoo_close_on_or_before(symbol, target):
+    """Last available daily close for `symbol` on or before `target` (a date).
+
+    Weekends/holidays fall back to the last trading day's close — the same
+    carry-forward convention as the original hand-built sheet.
+    Returns (price, actual bar date as YYYY-MM-DD string)."""
+    url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?interval=1d&range=2mo"
     req = urllib.request.Request(url, headers=UA)
     try:
         with urllib.request.urlopen(req, timeout=30) as r:
@@ -46,12 +56,16 @@ def yahoo_last_close(symbol):
         stamps = res["timestamp"]
     except (KeyError, IndexError, TypeError):
         fail(f"Unexpected Yahoo response shape for {symbol}")
-    # Walk back to the last non-null close (latest bar can be partial/None)
-    for ts, c in reversed(list(zip(stamps, closes))):
-        if c is not None:
-            bar_date = datetime.fromtimestamp(ts, ZoneInfo("America/New_York")).strftime("%Y-%m-%d")
-            return round(float(c), 2), bar_date
-    fail(f"No usable closes returned for {symbol}")
+    best = None
+    for ts, c in zip(stamps, closes):
+        if c is None:
+            continue
+        bar_date = datetime.fromtimestamp(ts, ZoneInfo("America/New_York")).date()
+        if bar_date <= target:
+            best = (round(float(c), 2), bar_date.isoformat())
+    if best is None:
+        fail(f"No usable closes on or before {target} for {symbol}")
+    return best
 
 
 def gemini_row(prompt):
@@ -80,33 +94,25 @@ def gemini_row(prompt):
         fail(f"Could not parse Gemini response: {e}")
 
 
-def main():
-    with open(DATA_PATH) as f:
-        rows = json.load(f)
-
-    today = datetime.now(ZoneInfo("America/New_York")).strftime("%Y-%m-%d")
-    if any(r["date"] == today for r in rows):
-        print(f"Row for {today} already exists — nothing to do.")
-        return
-
-    prices, bar_dates = {}, {}
+def build_row(target, template, rows):
+    """Fetch market data and Gemini judgment fields for one calendar date."""
+    target_s = target.isoformat()
+    prices = {}
     for field, sym in SYMBOLS.items():
-        price, bar_date = yahoo_last_close(sym)
+        price, _bar_date = yahoo_close_on_or_before(sym, target)
         prices[field] = price
-        bar_dates[field] = bar_date
-    print(f"Market closes: {prices} (bars dated {bar_dates})")
+    print(f"{target_s}: market closes {prices}", flush=True)
 
-    template = open(PROMPT_PATH).read()
     recent = json.dumps(rows[-7:], indent=2)
     prompt = (template
-              .replace("{{TODAY}}", today)
+              .replace("{{TODAY}}", target_s)
               .replace("{{WTI}}", str(prices["wtiPrice"]))
               .replace("{{BRENT}}", str(prices["brentPrice"]))
               .replace("{{NATGAS}}", str(prices["natGasPrice"]))
               .replace("{{RECENT_ROWS}}", recent))
 
     ai = gemini_row(prompt)
-    print(f"Gemini returned: {ai}")
+    print(f"{target_s}: Gemini returned: {ai}", flush=True)
 
     # --- validation: never write a bad row silently ---
     try:
@@ -114,16 +120,16 @@ def main():
         sh = float(ai["shadowOther"])
         ev = str(ai["events"]).strip()
     except (KeyError, TypeError, ValueError):
-        fail(f"Gemini output missing/invalid fields: {ai}")
+        fail(f"Gemini output missing/invalid fields for {target_s}: {ai}")
     if not (90.0 <= gl <= 110.0):
-        fail(f"globalLiquids {gl} outside sane range 90-110")
+        fail(f"globalLiquids {gl} outside sane range 90-110 ({target_s})")
     if not (0.0 <= sh <= 20.0):
-        fail(f"shadowOther {sh} outside sane range 0-20")
+        fail(f"shadowOther {sh} outside sane range 0-20 ({target_s})")
     if not ev or len(ev) > 140:
-        fail(f"events note empty or too long: {ev!r}")
+        fail(f"events note empty or too long ({target_s}): {ev!r}")
 
-    new_row = {
-        "date": today,
+    return {
+        "date": target_s,
         "globalLiquids": round(gl, 1),
         "wtiPrice": prices["wtiPrice"],
         "brentPrice": prices["brentPrice"],
@@ -131,11 +137,32 @@ def main():
         "shadowOther": round(sh, 1),
         "events": ev,
     }
-    rows.append(new_row)
+
+
+def main():
+    with open(DATA_PATH) as f:
+        rows = json.load(f)
+
+    today = datetime.now(ZoneInfo("America/New_York")).date()
+    last_date = datetime.fromisoformat(rows[-1]["date"]).date()
+    missing = [last_date + timedelta(days=i)
+               for i in range(1, (today - last_date).days + 1)]
+    if not missing:
+        print(f"Data is current through {last_date} — nothing to do.")
+        return
+    if len(missing) > 45:
+        fail(f"Gap of {len(missing)} days is too large to backfill in one run; "
+             f"investigate before proceeding.")
+
+    template = open(PROMPT_PATH).read()
+    for target in missing:
+        rows.append(build_row(target, template, rows))
+
     with open(DATA_PATH, "w") as f:
         json.dump(rows, f, indent=2)
         f.write("\n")
-    print(f"Appended row for {today}: {new_row}")
+    print(f"Appended {len(missing)} row(s): "
+          f"{missing[0]} through {missing[-1]}")
 
 
 if __name__ == "__main__":
